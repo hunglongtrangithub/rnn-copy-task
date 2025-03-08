@@ -2,8 +2,8 @@ import math
 import torch
 
 
-class MulLSTM(torch.nn.Module):
-    def __init__(self, input_size, hidden_size, device=None, dtype=None):
+class LSTM(torch.nn.Module):
+    def __init__(self, input_size, hidden_size, num_classes, device=None, dtype=None):
         super().__init__()
         factory_kwargs = {"device": device, "dtype": dtype}
         self.hidden_size = hidden_size
@@ -24,13 +24,18 @@ class MulLSTM(torch.nn.Module):
         self.b_o = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
         self.b_c = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
 
+        self.linear = torch.nn.Linear(hidden_size, num_classes, bias=True, **factory_kwargs)
+
         k = 1 / math.sqrt(self.hidden_size)
         for param in self.parameters():
             torch.nn.init.uniform_(param, -k, k)
 
     def forward(self, x: torch.Tensor):
         """
-        dimensions of x: (batch_size), seq_len, input_size
+        Args:
+            x: (batch_size), seq_len, input_size
+        Returns:
+            outputs: (batch_size), seq_len, num_classes
         """
         if x.dim() not in (2, 3):
             raise ValueError(f"Expected input to be 2D or 3D, got {x.dim()}D instead")
@@ -58,8 +63,10 @@ class MulLSTM(torch.nn.Module):
             outputs.append(torch.unsqueeze(h_t, 1))  # (batch_size, 1, hidden_size)
 
         outputs = torch.cat(outputs, dim=1)  # (batch_size, seq_len, hidden_size)
+        outputs = self.linear(outputs)  # (batch_size, seq_len, num_labels)
+
         if not is_batched:
-            outputs = torch.squeeze(outputs, 0)
+            outputs = torch.squeeze(outputs, 0)  # (seq_len, num_classes)
         return outputs
 
 
@@ -67,10 +74,11 @@ if __name__ == "__main__":
     # Test the LSTM implementation
     input_size = 10
     hidden_size = 20
+    num_classes = 5
     batch_size = 5
     seq_len = 15
 
-    model = MulLSTM(input_size, hidden_size)
+    model = LSTM(input_size, hidden_size, num_classes)
     x = torch.randn(batch_size, seq_len, input_size)
     output = model(x)
     print(output.shape)  # Expected shape: (batch_size, seq_len, hidden_size)
