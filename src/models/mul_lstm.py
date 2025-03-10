@@ -1,13 +1,12 @@
-import math
 import torch
 
+from src.models.base import Model
 
-class MulLSTM(torch.nn.Module):
+
+class MultiplicativeLSTM(Model):
     def __init__(self, input_size, hidden_size, num_classes, device=None, dtype=None):
-        super().__init__()
+        super().__init__(input_size, hidden_size, num_classes, device=device, dtype=dtype)
         factory_kwargs = {"device": device, "dtype": dtype}
-        self.hidden_size = hidden_size
-        self.input_size = input_size
 
         self.W_i = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
         self.W_f = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
@@ -27,19 +26,9 @@ class MulLSTM(torch.nn.Module):
         self.b_c = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
         self.b_m = torch.nn.Parameter(torch.empty(input_size, **factory_kwargs))
 
-        self.linear = torch.nn.Linear(hidden_size, num_classes, bias=True, **factory_kwargs)
+        self.initialize_parameters()
 
-        k = 1 / math.sqrt(self.hidden_size)
-        for param in self.parameters():
-            torch.nn.init.uniform_(param, -k, k)
-
-    def forward(self, x: torch.Tensor):
-        """
-        Args:
-            x: (batch_size), seq_len, input_size
-        Returns:
-            outputs: (batch_size), seq_len, num_classes
-        """
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         if x.dim() not in (2, 3):
             raise ValueError(f"Expected input to be 2D or 3D, got {x.dim()}D instead")
         is_batched = x.dim() == 3
@@ -83,7 +72,7 @@ if __name__ == "__main__":
     batch_size = 5
     seq_len = 15
 
-    model = MulLSTM(input_size, hidden_size, num_classes)
+    model = MultiplicativeLSTM(input_size, hidden_size, num_classes)
     x = torch.randn(batch_size, seq_len, input_size)
     output = model(x)
     print(output.shape)  # Expected shape: (batch_size, seq_len, hidden_size)

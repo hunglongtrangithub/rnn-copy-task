@@ -1,13 +1,12 @@
-import math
 import torch
 
+from src.models.base import Model
 
-class GRU(torch.nn.Module):
+
+class GRU(Model):
     def __init__(self, input_size, hidden_size, num_classes, device=None, dtype=None):
-        super().__init__()
+        super().__init__(input_size, hidden_size, num_classes, device=device, dtype=dtype)
         factory_kwargs = {"device": device, "dtype": dtype}
-        self.hidden_size = hidden_size
-        self.input_size = input_size
 
         self.W_z = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
         self.W_r = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
@@ -21,19 +20,9 @@ class GRU(torch.nn.Module):
         self.b_r = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
         self.b_h = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
 
-        self.linear = torch.nn.Linear(hidden_size, num_classes, bias=True, **factory_kwargs)
+        self.initialize_parameters()
 
-        k = 1 / math.sqrt(self.hidden_size)
-        for param in self.parameters():
-            torch.nn.init.uniform_(param, -k, k)
-
-    def forward(self, x: torch.Tensor):
-        """
-        Args:
-            x: (batch_size), seq_len, input_size
-        Returns:
-            outputs: (batch_size), seq_len, num_classes
-        """
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         if x.dim() not in (2, 3):
             raise ValueError(f"Expected input to be 2D or 3D, got {x.dim()}D instead")
         is_batched = x.dim() == 3
