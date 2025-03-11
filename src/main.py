@@ -7,6 +7,7 @@ import torch
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from loguru import logger
 
 from src.models import LSTM, MultiplicativeLSTM, GRU, MultiplicativeGRU
 from src.train import Trainer, ModelConfig, TrainingConfig, plot_metrics
@@ -27,8 +28,8 @@ def set_seed(seed):
 
 def run_experiment(model_types: list[str], sequence_lengths: list[int], n_trials: int, save_dir: Path):
     """Run experiments for all model types and sequence lengths"""
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Using device: {device}")
+    device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+    logger.info(f"Using device: {device}")
 
     model_config = ModelConfig()
 

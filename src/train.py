@@ -5,6 +5,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+from loguru import logger
 
 from src.dataset import CopyTaskDataset
 from src.models import Model
@@ -16,7 +17,7 @@ class OneHotEncoder:
         self.embedding_matrix = torch.eye(num_classes)
 
     def encode(self, x):
-        return F.embedding(x, self.embedding_matrix)
+        return F.embedding(x, self.embedding_matrix.to(x.device))
 
 
 @dataclass
@@ -39,7 +40,7 @@ class TrainingConfig:
     num_test_samples: int = 100
     num_blanks: int = 10
     seed: int = 42
-    device: str = "cuda" if torch.cuda.is_available() else "cpu"
+    device: str = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
 
 class Trainer:
@@ -108,16 +109,23 @@ class Trainer:
         for batch_idx, (inputs, targets) in enumerate(self.train_loader):
             inputs = inputs.to(self.config.device)
             targets = targets.to(self.config.device)
+            logger.debug(f"inputs.shape: {inputs.shape}")
+            logger.debug(f"targets.shape: {targets.shape}")
 
             inputs_one_hot = self.encoder.encode(inputs)
+            logger.debug(f"inputs_one_hot.shape; {inputs_one_hot.shape}")
 
             self.optimizer.zero_grad()
             # Forward pass to get logits
             outputs = self.model(inputs_one_hot)
+            logger.debug(f"outputs.shape: {outputs.shape}")
 
             # Reshape to feed into CrossEntropyLoss
             outputs = outputs.reshape(-1, self.num_classes)
             targets = targets.reshape(-1)
+            logger.debug(f"outputs.shape (reshaped): {outputs.shape}")
+            logger.debug(f"targets.shape (reshaped): {targets.shape}")
+
             # Take the loss across the entire batch
             loss = self.criterion(outputs, targets)
 
@@ -131,6 +139,7 @@ class Trainer:
 
             # Calculate accuracy. Softmax then argmax
             pred = F.softmax(outputs, dim=1).argmax(dim=1)
+            logger.debug(f"pred.shape: {pred.shape} - targets.shape: {targets.shape}")
             correct = (pred == targets).sum().item()
             total_correct += correct
             total_tokens += targets.numel()
