@@ -114,6 +114,7 @@ def run_experiment(model_types: list[str], sequence_lengths: list[int], n_trials
 
                 # Plot metrics for this trial
                 plots_dir = save_dir / str(seq_len) / model_type
+                plots_dir.mkdir(parents=True, exist_ok=True)
                 plot_metrics(metrics, f"{model_type}_trial{trial + 1}", seq_len, plots_dir)
 
             # Calculate statistics across trials
