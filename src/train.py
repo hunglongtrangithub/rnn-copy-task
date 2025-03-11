@@ -1,8 +1,10 @@
 from pathlib import Path
+from dataclasses import dataclass
+
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-from dataclasses import dataclass
 
 from src.dataset import CopyTaskDataset
 from src.models import Model
@@ -14,7 +16,7 @@ class OneHotEncoder:
         self.embedding_matrix = torch.eye(num_classes)
 
     def encode(self, x):
-        return torch.nn.functional.embedding(x, self.embedding_matrix)
+        return F.embedding(x, self.embedding_matrix)
 
 
 @dataclass
@@ -30,7 +32,7 @@ class TrainingConfig:
     batch_size: int = 32
     learning_rate: float = 0.001
     num_epochs: int = 50
-    patience: int = 5  # Early stopping patience
+    # patience: int = 5  # Early stopping patience
     clip_grad_norm: float = 5.0
     num_train_samples: int = 800
     num_val_samples: int = 100
@@ -94,7 +96,7 @@ class Trainer:
         self.train_accs = []
         self.val_accs = []
         self.best_val_loss = float("inf")
-        self.patience_counter = 0
+        # self.patience_counter = 0
 
     def train_epoch(self) -> tuple[float, float]:
         """Train for one epoch"""
@@ -110,6 +112,7 @@ class Trainer:
             inputs_one_hot = self.encoder.encode(inputs)
 
             self.optimizer.zero_grad()
+            # Forward pass to get logits
             outputs = self.model(inputs_one_hot)
 
             # Reshape to feed into CrossEntropyLoss
@@ -120,19 +123,19 @@ class Trainer:
 
             loss.backward()
             # TODO: Is this mandatory?
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.clip_grad_norm)
+            # torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.clip_grad_norm)
             self.optimizer.step()
 
             # Accumulate loss
             total_loss += loss.item()
 
-            # Calculate accuracy
-            pred = outputs.argmax(dim=1)
+            # Calculate accuracy. Softmax then argmax
+            pred = F.softmax(outputs, dim=1).argmax(dim=1)
             correct = (pred == targets).sum().item()
             total_correct += correct
             total_tokens += targets.numel()
 
-            if batch_idx % 10 == 0:
+            if batch_idx % 5 == 0:
                 print(f"Batch {batch_idx}/{len(self.train_loader)} - Loss: {loss.item():.4f} - Accuracy: {total_correct / max(1, total_tokens):.4f}")
 
         avg_loss = total_loss / len(self.train_loader)
@@ -162,7 +165,7 @@ class Trainer:
                 loss = self.criterion(outputs, targets)
                 total_loss += loss.item()
 
-                pred = outputs.argmax(dim=1)
+                pred = F.softmax(outputs, dim=1).argmax(dim=1)
                 correct = (pred == targets).sum().item()
                 total_correct += correct
                 total_tokens += targets.numel()
@@ -190,7 +193,7 @@ class Trainer:
                 outputs = outputs.reshape(-1, self.num_classes)
                 targets = targets.reshape(-1)
 
-                pred = outputs.argmax(dim=1)
+                pred = F.softmax(outputs, dim=1).argmax(dim=1)
                 correct = (pred == targets).sum().item()
                 total_correct += correct
                 total_tokens += targets.numel()
@@ -199,7 +202,7 @@ class Trainer:
 
         return accuracy
 
-    def train(self):
+    def train(self) -> dict:
         """Train the model with early stopping"""
         for epoch in range(self.config.num_epochs):
             train_loss, train_acc = self.train_epoch()
@@ -216,16 +219,19 @@ class Trainer:
 
             # Check for early stopping
             if val_loss < self.best_val_loss:
+                print("Saving best model")
                 self.best_val_loss = val_loss
-                self.patience_counter = 0
+                # self.patience_counter = 0
                 # Save best model
                 self.best_model_state = {key: value.cpu().clone() for key, value in self.model.state_dict().items()}
-            else:
-                self.patience_counter += 1
-                if self.patience_counter >= self.config.patience:
-                    print(f"Early stopping after {epoch + 1} epochs")
-                    break
+            # else:
+            #     self.patience_counter += 1
+            #     if self.patience_counter >= self.config.patience:
+            #         print(f"Early stopping after {epoch + 1} epochs")
+            #         break
 
+        print("Training complete")
+        print("Loading best model for testing")
         # Load best model for testing
         if hasattr(self, "best_model_state"):
             self.model.load_state_dict(self.best_model_state)
@@ -245,7 +251,7 @@ class Trainer:
         }
 
 
-def plot_metrics(metrics_dict, model_type, seq_len):
+def plot_metrics(metrics_dict: dict, model_type: str, seq_len: int, save_dir: Path):
     """Plot training and validation metrics"""
     plt.figure(figsize=(12, 6))
 
@@ -268,7 +274,5 @@ def plot_metrics(metrics_dict, model_type, seq_len):
     plt.tight_layout()
 
     # Save plot
-    plots_dir = Path(__file__).parents[1] / "reports" / "plots"
-    plots_dir.mkdir(parents=True, exist_ok=True)
-    plt.savefig(plots_dir / f"{model_type}_seq{seq_len}.png")
+    plt.savefig(save_dir / f"{model_type}_seq{seq_len}.png")
     plt.close()

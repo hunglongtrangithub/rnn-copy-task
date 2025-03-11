@@ -25,7 +25,7 @@ def set_seed(seed):
     torch.backends.cudnn.benchmark = False
 
 
-def run_experiment(model_types, sequence_lengths, n_trials=3):
+def run_experiment(model_types: list[str], sequence_lengths: list[int], n_trials: int, save_dir: Path):
     """Run experiments for all model types and sequence lengths"""
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
@@ -113,7 +113,8 @@ def run_experiment(model_types, sequence_lengths, n_trials=3):
                 trial_results.append(trial_result)
 
                 # Plot metrics for this trial
-                plot_metrics(metrics, f"{model_type}_trial{trial + 1}", seq_len)
+                plots_dir = save_dir / str(seq_len) / model_type
+                plot_metrics(metrics, f"{model_type}_trial{trial + 1}", seq_len, plots_dir)
 
             # Calculate statistics across trials
             test_accs = [result["test_acc"] for result in trial_results]
@@ -143,12 +144,8 @@ def run_experiment(model_types, sequence_lengths, n_trials=3):
     return results
 
 
-def plot_comparative_results(results, sequence_lengths, model_types):
+def plot_comparative_results(results, sequence_lengths, model_types, save_dir):
     """Plot comparative results across different models and sequence lengths"""
-    # Create directory for plots
-    plots_dir = Path(__file__).parents[1] / "reports" / "plots"
-    plots_dir.mkdir(parents=True, exist_ok=True)
-
     # Prepare data for plots
     seq_lens = []
     model_names = []
@@ -197,7 +194,7 @@ def plot_comparative_results(results, sequence_lengths, model_types):
     plt.title("Model Accuracy vs Sequence Length")
     plt.legend()
     plt.grid(True, alpha=0.3)
-    plt.savefig(plots_dir / "accuracy_vs_seq_length.png")
+    plt.savefig(save_dir / "accuracy_vs_seq_length.png")
     plt.close()
 
     # Plot 2: Training Time vs Sequence Length
@@ -218,7 +215,7 @@ def plot_comparative_results(results, sequence_lengths, model_types):
     plt.title("Training Time vs Sequence Length")
     plt.legend()
     plt.grid(True, alpha=0.3)
-    plt.savefig(plots_dir / "train_time_vs_seq_length.png")
+    plt.savefig(save_dir / "train_time_vs_seq_length.png")
     plt.close()
 
     # Plot 3: Epochs to Converge vs Sequence Length
@@ -239,7 +236,7 @@ def plot_comparative_results(results, sequence_lengths, model_types):
     plt.title("Convergence Speed vs Sequence Length")
     plt.legend()
     plt.grid(True, alpha=0.3)
-    plt.savefig(plots_dir / "epochs_vs_seq_length.png")
+    plt.savefig(save_dir / "epochs_vs_seq_length.png")
     plt.close()
 
     # Create a bar chart comparing accuracy at the longest sequence length
@@ -272,7 +269,7 @@ def plot_comparative_results(results, sequence_lengths, model_types):
             rotation=0,
         )
 
-    plt.savefig(plots_dir / f"accuracy_comparison_seq{longest_seq}.png")
+    plt.savefig(save_dir / f"accuracy_comparison_seq{longest_seq}.png")
     plt.close()
 
 
@@ -319,11 +316,14 @@ def main():
     sequence_lengths = [100, 200, 500, 1000]
     n_trials = 3
 
+    reports_dir = Path(__file__).parents[1] / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
     # Run experiments
-    results = run_experiment(model_types, sequence_lengths, n_trials)
+    results = run_experiment(model_types, sequence_lengths, n_trials, reports_dir / "plots")
 
     # Plot comparative results
-    plot_comparative_results(results, sequence_lengths, model_types)
+    plot_comparative_results(results, sequence_lengths, model_types, reports_dir)
 
     # Save results
     save_results(results)
