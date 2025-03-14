@@ -5,25 +5,45 @@ from src.models.base import Model
 
 class LSTM(Model):
     def __init__(self, input_size, hidden_size, num_classes, device=None, dtype=None):
-        super().__init__(input_size, hidden_size, num_classes, device=device, dtype=dtype)
+        super().__init__(
+            input_size, hidden_size, num_classes, device=device, dtype=dtype
+        )
         factory_kwargs = {"device": device, "dtype": dtype}
 
-        self.W_i = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
-        self.W_f = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
-        self.W_o = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
-        self.W_c = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
+        self.W_i = torch.nn.Parameter(
+            torch.empty((input_size, hidden_size), **factory_kwargs)
+        )
+        self.W_f = torch.nn.Parameter(
+            torch.empty((input_size, hidden_size), **factory_kwargs)
+        )
+        self.W_o = torch.nn.Parameter(
+            torch.empty((input_size, hidden_size), **factory_kwargs)
+        )
+        self.W_c = torch.nn.Parameter(
+            torch.empty((input_size, hidden_size), **factory_kwargs)
+        )
 
-        self.U_i = torch.nn.Parameter(torch.empty((hidden_size, hidden_size), **factory_kwargs))
-        self.U_f = torch.nn.Parameter(torch.empty((hidden_size, hidden_size), **factory_kwargs))
-        self.U_o = torch.nn.Parameter(torch.empty((hidden_size, hidden_size), **factory_kwargs))
-        self.U_c = torch.nn.Parameter(torch.empty((hidden_size, hidden_size), **factory_kwargs))
+        self.U_i = torch.nn.Parameter(
+            torch.empty((hidden_size, hidden_size), **factory_kwargs)
+        )
+        self.U_f = torch.nn.Parameter(
+            torch.empty((hidden_size, hidden_size), **factory_kwargs)
+        )
+        self.U_o = torch.nn.Parameter(
+            torch.empty((hidden_size, hidden_size), **factory_kwargs)
+        )
+        self.U_c = torch.nn.Parameter(
+            torch.empty((hidden_size, hidden_size), **factory_kwargs)
+        )
 
         self.b_i = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
         self.b_f = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
         self.b_o = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
         self.b_c = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
 
-        self.linear = torch.nn.Linear(hidden_size, num_classes, bias=True, **factory_kwargs)
+        self.linear = torch.nn.Linear(
+            hidden_size, num_classes, bias=True, **factory_kwargs
+        )
 
         self.initialize_parameters()
 
@@ -36,17 +56,29 @@ class LSTM(Model):
         batch_size = x.shape[0]
         seq_len = x.shape[1]
 
-        h_t = torch.zeros((batch_size, self.hidden_size), device=x.device, dtype=x.dtype)
-        c_t = torch.zeros((batch_size, self.hidden_size), device=x.device, dtype=x.dtype)
+        h_t = torch.zeros(
+            (batch_size, self.hidden_size), device=x.device, dtype=x.dtype
+        )
+        c_t = torch.zeros(
+            (batch_size, self.hidden_size), device=x.device, dtype=x.dtype
+        )
 
         outputs = []
         for t in range(seq_len):
             x_t = x[:, t, :]  # (batch_size, input_size)
 
-            i_t = torch.sigmoid(x_t @ self.W_i + h_t @ self.U_i + self.b_i)  # (batch_size, hidden_size)
-            f_t = torch.sigmoid(x_t @ self.W_f + h_t @ self.U_f + self.b_f)  # (batch_size, hidden_size)
-            o_t = torch.sigmoid(x_t @ self.W_o + h_t @ self.U_o + self.b_o)  # (batch_size, hidden_size)
-            c_tilde_t = torch.tanh(x_t @ self.W_c + h_t @ self.U_c + self.b_c)  # (batch_size, hidden_size)
+            i_t = torch.sigmoid(
+                x_t @ self.W_i + h_t @ self.U_i + self.b_i
+            )  # (batch_size, hidden_size)
+            f_t = torch.sigmoid(
+                x_t @ self.W_f + h_t @ self.U_f + self.b_f
+            )  # (batch_size, hidden_size)
+            o_t = torch.sigmoid(
+                x_t @ self.W_o + h_t @ self.U_o + self.b_o
+            )  # (batch_size, hidden_size)
+            c_tilde_t = torch.tanh(
+                x_t @ self.W_c + h_t @ self.U_c + self.b_c
+            )  # (batch_size, hidden_size)
 
             c_t = f_t * c_t + i_t * c_tilde_t  # (batch_size, hidden_size)
             h_t = o_t * torch.tanh(c_t)  # (batch_size, hidden_size)

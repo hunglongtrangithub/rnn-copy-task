@@ -26,9 +26,17 @@ def set_seed(seed):
     torch.backends.cudnn.benchmark = False
 
 
-def run_experiment(model_types: list[str], sequence_lengths: list[int], n_trials: int, save_dir: Path):
+def run_experiment(
+    model_types: list[str], sequence_lengths: list[int], n_trials: int, save_dir: Path
+):
     """Run experiments for all model types and sequence lengths"""
-    device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+    device = (
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
     logger.info(f"Using device: {device}")
 
     model_config = ModelConfig()
@@ -116,7 +124,9 @@ def run_experiment(model_types: list[str], sequence_lengths: list[int], n_trials
                 # Plot metrics for this trial
                 plots_dir = save_dir / str(seq_len) / model_type
                 plots_dir.mkdir(parents=True, exist_ok=True)
-                plot_metrics(metrics, f"{model_type}_trial{trial + 1}", seq_len, plots_dir)
+                plot_metrics(
+                    metrics, f"{model_type}_trial{trial + 1}", seq_len, plots_dir
+                )
 
             # Calculate statistics across trials
             test_accs = [result["test_acc"] for result in trial_results]
@@ -322,7 +332,9 @@ def main():
     reports_dir.mkdir(parents=True, exist_ok=True)
 
     # Run experiments
-    results = run_experiment(model_types, sequence_lengths, n_trials, reports_dir / "plots")
+    results = run_experiment(
+        model_types, sequence_lengths, n_trials, reports_dir / "plots"
+    )
 
     # Plot comparative results
     plot_comparative_results(results, sequence_lengths, model_types, reports_dir)

@@ -5,18 +5,36 @@ from src.models.base import Model
 
 class MultiplicativeGRU(Model):
     def __init__(self, input_size, hidden_size, num_classes, device=None, dtype=None):
-        super().__init__(input_size, hidden_size, num_classes, device=device, dtype=dtype)
+        super().__init__(
+            input_size, hidden_size, num_classes, device=device, dtype=dtype
+        )
         factory_kwargs = {"device": device, "dtype": dtype}
 
-        self.W_z = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
-        self.W_r = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
-        self.W_h = torch.nn.Parameter(torch.empty((input_size, hidden_size), **factory_kwargs))
-        self.W_m = torch.nn.Parameter(torch.empty((input_size, input_size), **factory_kwargs))
+        self.W_z = torch.nn.Parameter(
+            torch.empty((input_size, hidden_size), **factory_kwargs)
+        )
+        self.W_r = torch.nn.Parameter(
+            torch.empty((input_size, hidden_size), **factory_kwargs)
+        )
+        self.W_h = torch.nn.Parameter(
+            torch.empty((input_size, hidden_size), **factory_kwargs)
+        )
+        self.W_m = torch.nn.Parameter(
+            torch.empty((input_size, input_size), **factory_kwargs)
+        )
 
-        self.U_z = torch.nn.Parameter(torch.empty((hidden_size, hidden_size), **factory_kwargs))
-        self.U_r = torch.nn.Parameter(torch.empty((hidden_size, hidden_size), **factory_kwargs))
-        self.U_h = torch.nn.Parameter(torch.empty((hidden_size, hidden_size), **factory_kwargs))
-        self.U_m = torch.nn.Parameter(torch.empty((hidden_size, input_size), **factory_kwargs))
+        self.U_z = torch.nn.Parameter(
+            torch.empty((hidden_size, hidden_size), **factory_kwargs)
+        )
+        self.U_r = torch.nn.Parameter(
+            torch.empty((hidden_size, hidden_size), **factory_kwargs)
+        )
+        self.U_h = torch.nn.Parameter(
+            torch.empty((hidden_size, hidden_size), **factory_kwargs)
+        )
+        self.U_m = torch.nn.Parameter(
+            torch.empty((hidden_size, input_size), **factory_kwargs)
+        )
 
         self.b_z = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
         self.b_r = torch.nn.Parameter(torch.empty(hidden_size, **factory_kwargs))
@@ -34,7 +52,9 @@ class MultiplicativeGRU(Model):
         batch_size = x.shape[0]
         seq_len = x.shape[1]
 
-        h_t = torch.zeros((batch_size, self.hidden_size), device=x.device, dtype=x.dtype)
+        h_t = torch.zeros(
+            (batch_size, self.hidden_size), device=x.device, dtype=x.dtype
+        )
 
         outputs = []
         for t in range(seq_len):
@@ -42,9 +62,15 @@ class MultiplicativeGRU(Model):
             m_t = x_t @ self.W_m + h_t @ self.U_m + self.b_m  # (input_size)
             x_t = x_t * m_t  # (batch_size, input_size)
 
-            z_t = torch.sigmoid(x_t @ self.W_z + h_t @ self.U_z + self.b_z)  # (batch_size, hidden_size)
-            r_t = torch.sigmoid(x_t @ self.W_r + h_t @ self.U_r + self.b_r)  # (batch_size, hidden_size)
-            h_tilde_t = torch.tanh(x_t @ self.W_h + (r_t * h_t) @ self.U_h + self.b_h)  # (batch_size, hidden_size)
+            z_t = torch.sigmoid(
+                x_t @ self.W_z + h_t @ self.U_z + self.b_z
+            )  # (batch_size, hidden_size)
+            r_t = torch.sigmoid(
+                x_t @ self.W_r + h_t @ self.U_r + self.b_r
+            )  # (batch_size, hidden_size)
+            h_tilde_t = torch.tanh(
+                x_t @ self.W_h + (r_t * h_t) @ self.U_h + self.b_h
+            )  # (batch_size, hidden_size)
 
             h_t = (1 - z_t) * h_t + z_t * h_tilde_t  # (batch_size, hidden_size)
 

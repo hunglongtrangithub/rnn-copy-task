@@ -2,6 +2,13 @@ import torch
 
 
 class CopyTaskDataset(torch.utils.data.Dataset):
+    """
+    Dataset for the copy task.
+    The task is to copy a sequence of tokens of length `seq_len` from the input to the target.
+    Input: [seq_len tokens, num_blanks blank tokens, delimiter token, seq_len tokens]
+    Target: [num_blanks + seq_len + 1 blank tokens, seq_len tokens]
+    """
+
     def __init__(
         self,
         num_samples: int,
@@ -22,7 +29,9 @@ class CopyTaskDataset(torch.utils.data.Dataset):
 
         self.data = []
         for _ in range(num_samples):
-            sequence = torch.randint(0, self.vocab_size, (self.seq_len,), generator=generator)
+            sequence = torch.randint(
+                0, self.vocab_size, (self.seq_len,), generator=generator
+            )
             input_seq = torch.cat(
                 [
                     sequence,
@@ -57,6 +66,10 @@ if __name__ == "__main__":
     d2 = CopyTaskDataset(**params, seed=42)
     dl1 = [d1[i] for i in range(len(d1))]
     dl2 = [d2[i] for i in range(len(d2))]
+    print(f"params: {params}")
+    print("example in the dataset:")
+    print(f"input: {dl1[0][0]}")
+    print(f"target: {dl1[0][1]}")
     # check if the two datasets are the same and the data is consistent with the same seed
     assert all(
         all(

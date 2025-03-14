@@ -40,7 +40,13 @@ class TrainingConfig:
     num_test_samples: int = 100
     num_blanks: int = 10
     seed: int = 42
-    device: str = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+    device: str = (
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
 
 
 class Trainer:
@@ -79,16 +85,24 @@ class Trainer:
             seed=config.seed + 2,
         )
 
-        self.train_loader = DataLoader(self.train_dataset, batch_size=config.batch_size, shuffle=True)
-        self.val_loader = DataLoader(self.val_dataset, batch_size=config.batch_size, shuffle=False)
-        self.test_loader = DataLoader(self.test_dataset, batch_size=config.batch_size, shuffle=False)
+        self.train_loader = DataLoader(
+            self.train_dataset, batch_size=config.batch_size, shuffle=True
+        )
+        self.val_loader = DataLoader(
+            self.val_dataset, batch_size=config.batch_size, shuffle=False
+        )
+        self.test_loader = DataLoader(
+            self.test_dataset, batch_size=config.batch_size, shuffle=False
+        )
 
         # Number of classes = vocab_size + 2 (for blank token and delimiter token)
         self.num_classes = model_config.vocab_size + 2
         self.encoder = OneHotEncoder(self.num_classes)
 
         self.optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
-        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=self.train_dataset.blank_token)  # Ignore blank tokens in loss
+        self.criterion = torch.nn.CrossEntropyLoss(
+            ignore_index=self.train_dataset.blank_token
+        )  # Ignore blank tokens in loss
 
         self.model = self.model.to(config.device)
 
@@ -145,7 +159,9 @@ class Trainer:
             total_tokens += targets.numel()
 
             if batch_idx % 5 == 0:
-                print(f"Batch {batch_idx}/{len(self.train_loader)} - Loss: {loss.item():.4f} - Accuracy: {total_correct / max(1, total_tokens):.4f}")
+                print(
+                    f"Batch {batch_idx}/{len(self.train_loader)} - Loss: {loss.item():.4f} - Accuracy: {total_correct / max(1, total_tokens):.4f}"
+                )
 
         avg_loss = total_loss / len(self.train_loader)
         accuracy = total_correct / max(1, total_tokens)
@@ -232,7 +248,10 @@ class Trainer:
                 self.best_val_loss = val_loss
                 # self.patience_counter = 0
                 # Save best model
-                self.best_model_state = {key: value.cpu().clone() for key, value in self.model.state_dict().items()}
+                self.best_model_state = {
+                    key: value.cpu().clone()
+                    for key, value in self.model.state_dict().items()
+                }
             # else:
             #     self.patience_counter += 1
             #     if self.patience_counter >= self.config.patience:
