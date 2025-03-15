@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from loguru import logger
 
 from src.models import LSTM, MultiplicativeLSTM, GRU, MultiplicativeGRU
-from src.train import Trainer, ModelConfig, TrainingConfig
+from src.trainer import Trainer, ModelConfig, TrainingConfig
 
 # Ensure reproducibility
 SEED = 42
