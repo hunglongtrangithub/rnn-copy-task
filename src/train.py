@@ -1,10 +1,8 @@
-from pathlib import Path
 from dataclasses import dataclass
 
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
 from loguru import logger
 
 from src.dataset import CopyTaskDataset
@@ -277,30 +275,3 @@ class Trainer:
             "final_train_acc": self.train_accs[-1],
             "final_val_acc": self.val_accs[-1],
         }
-
-
-def plot_metrics(metrics_dict: dict, model_type: str, seq_len: int, save_dir: Path):
-    """Plot training and validation metrics"""
-    plt.figure(figsize=(12, 6))
-
-    plt.subplot(1, 2, 1)
-    plt.plot(metrics_dict["train_losses"], label="Train Loss")
-    plt.plot(metrics_dict["val_losses"], label="Val Loss")
-    plt.xlabel("Epochs")
-    plt.ylabel("Loss")
-    plt.title(f"{model_type} - Loss (Seq Len: {seq_len})")
-    plt.legend()
-
-    plt.subplot(1, 2, 2)
-    plt.plot(metrics_dict["train_accs"], label="Train Acc")
-    plt.plot(metrics_dict["val_accs"], label="Val Acc")
-    plt.xlabel("Epochs")
-    plt.ylabel("Accuracy")
-    plt.title(f"{model_type} - Accuracy (Seq Len: {seq_len})")
-    plt.legend()
-
-    plt.tight_layout()
-
-    # Save plot
-    plt.savefig(save_dir / f"{model_type}_seq{seq_len}.png")
-    plt.close()
