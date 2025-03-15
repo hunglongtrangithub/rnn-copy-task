@@ -89,7 +89,10 @@ def run_experiment(
 
                 # Train model
                 start_time = time.time()
-                trainer = Trainer(model, training_config, model_config, seq_len)
+                # NOTE: test sequence length is set to seq_len + 100 to test generalization
+                trainer = Trainer(
+                    model, training_config, model_config, seq_len, seq_len + 100
+                )
                 metrics = trainer.train()
                 train_time = time.time() - start_time
 

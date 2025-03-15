@@ -52,8 +52,9 @@ class Trainer:
         config: TrainingConfig,
         model_config: ModelConfig,
         seq_len: int,
+        test_seq_len: int | None = None,
     ):
-        self.model = model
+        self.model = model.to(config.device)
         self.config = config
         self.model_config = model_config
         self.seq_len = seq_len
@@ -75,7 +76,7 @@ class Trainer:
         )
         self.test_dataset = CopyTaskDataset(
             config.num_test_samples,
-            seq_len,
+            test_seq_len if test_seq_len is not None else seq_len,
             config.num_blanks,
             model_config.vocab_size,
             seed=config.seed + 2,
@@ -97,7 +98,6 @@ class Trainer:
 
         self.optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
         self.criterion = torch.nn.CrossEntropyLoss()
-        self.model = self.model.to(config.device)
 
         self.train_losses = []
         self.val_losses = []
@@ -187,7 +187,14 @@ class Trainer:
         return avg_loss, accuracy
 
     def test(self) -> float:
-        """Test the model"""
+        """
+        Test the model on sequences of any length
+
+        RNNs naturally maintain hidden state across timesteps during a single forward pass.
+        This enables testing on longer sequences than those used during training without any
+        special handling - the hidden state propagation happens automatically during the
+        forward pass through the entire sequence.
+        """
         self.model.eval()
         total_correct = 0
         total_tokens = 0
@@ -198,6 +205,10 @@ class Trainer:
                 targets = targets.to(self.config.device)
 
                 inputs_one_hot = self.encoder.encode(inputs)
+
+                # NOTE: Process entire sequence in one forward pass
+                # The RNN automatically maintains hidden state across all timesteps
+                # This works regardless of sequence length (can be longer than training length)
                 outputs = self.model(inputs_one_hot)
 
                 # Only take the last seq_len elements of the output and target, then flatten
