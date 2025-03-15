@@ -218,7 +218,7 @@ def main():
     model_types = ["LSTM", "MultiplicativeLSTM", "GRU", "MultiplicativeGRU"]
     sequence_lengths = [100, 200, 500, 1000]
 
-    reports_dir = Path(__file__).parents[1] / "reports"
+    reports_dir = Path(__file__).parents[2] / "reports"
 
     # Load results
     results = load_results(reports_dir)
