@@ -3,7 +3,6 @@ from dataclasses import dataclass
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from loguru import logger
 
 from src.dataset import CopyTaskDataset
 from src.models import Model
@@ -29,13 +28,12 @@ class ModelConfig:
 class TrainingConfig:
     model_type: str
     batch_size: int = 32
-    learning_rate: float = 0.001
-    num_epochs: int = 50
-    # patience: int = 5  # Early stopping patience
+    learning_rate: float = 0.0001
+    num_epochs: int = 20
     clip_grad_norm: float = 5.0
-    num_train_samples: int = 800
-    num_val_samples: int = 100
-    num_test_samples: int = 100
+    num_train_samples: int = 8000
+    num_val_samples: int = 1000
+    num_test_samples: int = 1000
     num_blanks: int = 10
     seed: int = 42
     device: str = (
@@ -98,10 +96,7 @@ class Trainer:
         self.encoder = OneHotEncoder(self.num_classes)
 
         self.optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
-        self.criterion = torch.nn.CrossEntropyLoss(
-            ignore_index=self.train_dataset.blank_token
-        )  # Ignore blank tokens in loss
-
+        self.criterion = torch.nn.CrossEntropyLoss()
         self.model = self.model.to(config.device)
 
         self.train_losses = []
@@ -109,7 +104,6 @@ class Trainer:
         self.train_accs = []
         self.val_accs = []
         self.best_val_loss = float("inf")
-        # self.patience_counter = 0
 
     def train_epoch(self) -> tuple[float, float]:
         """Train for one epoch"""
@@ -121,29 +115,24 @@ class Trainer:
         for batch_idx, (inputs, targets) in enumerate(self.train_loader):
             inputs = inputs.to(self.config.device)
             targets = targets.to(self.config.device)
-            logger.debug(f"inputs.shape: {inputs.shape}")
-            logger.debug(f"targets.shape: {targets.shape}")
 
             inputs_one_hot = self.encoder.encode(inputs)
-            logger.debug(f"inputs_one_hot.shape; {inputs_one_hot.shape}")
 
             self.optimizer.zero_grad()
-            # Forward pass to get logits
             outputs = self.model(inputs_one_hot)
-            logger.debug(f"outputs.shape: {outputs.shape}")
 
-            # Reshape to feed into CrossEntropyLoss
-            outputs = outputs.reshape(-1, self.num_classes)
-            targets = targets.reshape(-1)
-            logger.debug(f"outputs.shape (reshaped): {outputs.shape}")
-            logger.debug(f"targets.shape (reshaped): {targets.shape}")
+            # Only take the last seq_len elements of the output and target, then flatten
+            outputs = outputs[:, -self.seq_len :].reshape(-1, self.num_classes)
+            targets = targets[:, -self.seq_len :].reshape(-1)
 
             # Take the loss across the entire batch
             loss = self.criterion(outputs, targets)
 
             loss.backward()
             # TODO: Is this mandatory?
-            # torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.clip_grad_norm)
+            torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(), self.config.clip_grad_norm
+            )
             self.optimizer.step()
 
             # Accumulate loss
@@ -151,12 +140,11 @@ class Trainer:
 
             # Calculate accuracy. Softmax then argmax
             pred = F.softmax(outputs, dim=1).argmax(dim=1)
-            logger.debug(f"pred.shape: {pred.shape} - targets.shape: {targets.shape}")
             correct = (pred == targets).sum().item()
             total_correct += correct
             total_tokens += targets.numel()
 
-            if batch_idx % 5 == 0:
+            if batch_idx % 10 == 0:
                 print(
                     f"Batch {batch_idx}/{len(self.train_loader)} - Loss: {loss.item():.4f} - Accuracy: {total_correct / max(1, total_tokens):.4f}"
                 )
@@ -179,11 +167,11 @@ class Trainer:
                 targets = targets.to(self.config.device)
 
                 inputs_one_hot = self.encoder.encode(inputs)
-
                 outputs = self.model(inputs_one_hot)
 
-                outputs = outputs.reshape(-1, self.num_classes)
-                targets = targets.reshape(-1)
+                # Only take the last seq_len elements of the output and target, then flatten
+                outputs = outputs[:, -self.seq_len :].reshape(-1, self.num_classes)
+                targets = targets[:, -self.seq_len :].reshape(-1)
 
                 loss = self.criterion(outputs, targets)
                 total_loss += loss.item()
@@ -210,11 +198,11 @@ class Trainer:
                 targets = targets.to(self.config.device)
 
                 inputs_one_hot = self.encoder.encode(inputs)
-
                 outputs = self.model(inputs_one_hot)
 
-                outputs = outputs.reshape(-1, self.num_classes)
-                targets = targets.reshape(-1)
+                # Only take the last seq_len elements of the output and target, then flatten
+                outputs = outputs[:, -self.seq_len :].reshape(-1, self.num_classes)
+                targets = targets[:, -self.seq_len :].reshape(-1)
 
                 pred = F.softmax(outputs, dim=1).argmax(dim=1)
                 correct = (pred == targets).sum().item()
@@ -250,11 +238,6 @@ class Trainer:
                     key: value.cpu().clone()
                     for key, value in self.model.state_dict().items()
                 }
-            # else:
-            #     self.patience_counter += 1
-            #     if self.patience_counter >= self.config.patience:
-            #         print(f"Early stopping after {epoch + 1} epochs")
-            #         break
 
         print("Training complete")
         print("Loading best model for testing")
