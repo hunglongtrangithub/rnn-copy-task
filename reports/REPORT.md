@@ -40,7 +40,7 @@ o_t = \sigma\bigl(W^{(o)} x_t + U^{(o)} h_{t-1} + b^{(o)}\bigr)
 $$
 
 $$
-\tilde{c}_t = \tanh\bigl(W^{(c)} x_t + U^{(c)} h_{t-1} + b^{(c)}\bigr)
+\tilde{c}_t = \tanh(W^{(c)} x_t + U^{(c)} h_{t-1} + b^{(c)})
 $$
 
 $$
@@ -65,23 +65,23 @@ $$
 **Key Modification**: Introduction of a learnable memory vector/matrix:
 
 $$
-m_t = W_m \, x_t + U_m \, h_{t-1} + b_m
+m_t = W_m x_t + U_m h_{t-1} + b_m
 $$
 
 $$
-x_t \leftarrow x_t \,\odot\, m_t
+x_t \leftarrow x_t \odot m_t
 $$
 
-Then the standard LSTM equations use $\tilde{x}_t = x_t \,\odot\, m_t$ in place of $x_t$:
+Then the standard LSTM equations use $\tilde{x}_t = x_t \odot m_t$ in place of $x_t$:
 
 $$
-i_t = \sigma\bigl(\tilde{x}_t \,W^{(i)} + h_{t-1}\,U^{(i)} + b^{(i)}\bigr), \quad \ldots
+i_t = \sigma(\tilde{x}_t W^{(i)} + h_{t-1} U^{(i)} + b^{(i)}), \quad \ldots
 $$
 
 **Implementation Notes**:
 
 - A separate parameter set for multiplicative interactions: $W_m, U_m, b_m$.
-- The code multiplies the input $x_t$ by the learned vector $m_t$ (dimension $=\text{input\_size}$) at each timestep.
+- The code multiplies the input $x_t$ by the learned vector $m_t$ (dimension $=\text{input size}$) at each timestep.
 - After that, the LSTM equations proceed as in the standard LSTM, using $x_t \odot m_t$ for gating and candidate cell computations.
 
 #### 2.1.3 Standard GRU
@@ -99,7 +99,7 @@ r_t = \sigma\bigl(W^{(r)} x_t + U^{(r)} h_{t-1} + b^{(r)}\bigr)
 $$
 
 $$
-\tilde{h}_t = \tanh\!\Bigl(W^{(h)} x_t + U^{(h)}\bigl(r_t \odot h_{t-1}\bigr) + b^{(h)}\Bigr)
+\tilde{h}_t = \tanh\bigl(W^{(h)} x_t + U^{(h)}\bigl(r_t \odot h_{t-1}\bigr) + b^{(h)}\bigr)
 $$
 
 $$
@@ -120,17 +120,17 @@ $$
 **Key Modification**: Similar to the mLSTM, we introduce a learnable vector/matrix $m_t$:
 
 $$
-m_t = W_m \, x_t + U_m \, h_{t-1} + b_m
+m_t = W_mx_t + U_mh_{t-1} + b_m
 $$
 
 $$
-x_t \leftarrow x_t \,\odot\, m_t
+x_t \leftarrow x_t \odot m_t
 $$
 
 Then the GRU equations run with this modified input:
 
 $$
-z_t = \sigma\bigl(x_t\,W^{(z)} + h_{t-1}\,U^{(z)} + b^{(z)}\bigr), \quad \ldots
+z_t = \sigma\bigl(x_tW^{(z)} + h_{t-1}U^{(z)} + b^{(z)}\bigr), \quad \ldots
 $$
 
 **Implementation Notes**:
@@ -152,7 +152,7 @@ Per the assignment, the Copy Task requires a model to:
 For a sequence length $T$, our implementation uses:
 
 - An original random sequence of length $T$.
-- A “blank token” repeated 10 times ($\text{num\_blanks} = 10$).
+- A “blank token” repeated 10 times ($\text{num blanks} = 10$).
 - A delimiter token (distinct from the blank token).
 - The target is forced to copy the first $T$ tokens in the final $T$ positions of the output.
 
@@ -164,21 +164,19 @@ We define a `CopyTaskDataset` class. Each sample contains:
 
 - **Input**:
 
-  $$
-    [\text{sequence of length } T,\;
-     (\text{10 blanks}),\;
-     (\text{delimiter token}),\;
-     (\text{10 blanks})]
-  $$
-
-  (Some variants add the blanks after the delimiter, but the key idea is a delay.)
+$$
+  [(\text{sequence of length } T),\;
+    (\text{10 blanks}),\;
+    (\text{delimiter token}),\;
+    (\text{T blanks})]
+$$
 
 - **Target**:
 
-  $$
-    [(\text{10 + } T + 1)\,\text{blanks},\;
-     \text{original sequence of length } T]
-  $$
+$$
+  [(\text{10 + } T + 1)\text{ blanks},\;
+    \text{original sequence of length } T]
+$$
 
 - The dataset is randomly generated for train, validation, and test splits.
 
@@ -205,7 +203,7 @@ I also test an extra “generalization length” $(T+100)$ at test time, but for
 
 ### 2.4 Implementation-Specific Notes
 
-- **One-Hot Encoding**: I use a custom `OneHotEncoder` (see `trainer.py`) that builds an identity matrix of size $(\text{vocab\_size}+2)\times(\text{vocab\_size}+2)$ and indexes into it with the token IDs.
+- **One-Hot Encoding**: I use a custom `OneHotEncoder` (see `trainer.py`) that builds an identity matrix of size $(\text{vocab size}+2)\times(\text{vocab size}+2)$ and indexes into it with the token IDs.
 - **Loss & Accuracy**: I compute cross-entropy over the final $T$ positions of the output (the part we expect the model to “copy”). Accuracy is the fraction of correctly predicted tokens in that final region.
 - **Hardware**: The training script checks if CUDA or MPS is available, else defaults to CPU.
 
