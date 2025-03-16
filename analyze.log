@@ -1,0 +1,70 @@
+
+Analyzing Long-Term Memory Capability:
+
+Sequence Length: 100
+LSTM: Mean Test Accuracy = 0.0997 ± 0.0005
+MultiplicativeLSTM: Mean Test Accuracy = 0.0999 ± 0.0010
+GRU: Mean Test Accuracy = 0.1006 ± 0.0005
+MultiplicativeGRU: Mean Test Accuracy = 0.1003 ± 0.0012
+
+Sequence Length: 200
+LSTM: Mean Test Accuracy = 0.1001 ± 0.0005
+MultiplicativeLSTM: Mean Test Accuracy = 0.0998 ± 0.0002
+GRU: Mean Test Accuracy = 0.0993 ± 0.0006
+MultiplicativeGRU: Mean Test Accuracy = 0.1003 ± 0.0009
+
+Sequence Length: 500
+LSTM: Mean Test Accuracy = 0.1000 ± 0.0006
+MultiplicativeLSTM: Mean Test Accuracy = 0.1003 ± 0.0006
+GRU: Mean Test Accuracy = 0.0996 ± 0.0002
+MultiplicativeGRU: Mean Test Accuracy = 0.1002 ± 0.0006
+
+Sequence Length: 1000
+LSTM: Mean Test Accuracy = 0.1000 ± 0.0003
+MultiplicativeLSTM: Mean Test Accuracy = 0.1002 ± 0.0003
+GRU: Mean Test Accuracy = 0.0999 ± 0.0002
+MultiplicativeGRU: Mean Test Accuracy = 0.1004 ± 0.0002
+
+Analyzing Multiplicative Effects:
+
+Sequence Length: 100
+LSTM vs Multiplicative LSTM: 0.0997 vs 0.0999
+GRU vs Multiplicative GRU: 0.1006 vs 0.1003
+LSTM vs Multiplicative LSTM Epochs: 20.00 vs 20.00
+GRU vs Multiplicative GRU Epochs: 20.00 vs 20.00
+LSTM vs Multiplicative LSTM Stability: 0.0005 vs 0.0010
+GRU vs Multiplicative GRU Stability: 0.0005 vs 0.0012
+
+Sequence Length: 200
+LSTM vs Multiplicative LSTM: 0.1001 vs 0.0998
+GRU vs Multiplicative GRU: 0.0993 vs 0.1003
+LSTM vs Multiplicative LSTM Epochs: 20.00 vs 20.00
+GRU vs Multiplicative GRU Epochs: 20.00 vs 20.00
+LSTM vs Multiplicative LSTM Stability: 0.0005 vs 0.0002
+GRU vs Multiplicative GRU Stability: 0.0006 vs 0.0009
+
+Sequence Length: 500
+LSTM vs Multiplicative LSTM: 0.1000 vs 0.1003
+GRU vs Multiplicative GRU: 0.0996 vs 0.1002
+LSTM vs Multiplicative LSTM Epochs: 20.00 vs 20.00
+GRU vs Multiplicative GRU Epochs: 20.00 vs 20.00
+LSTM vs Multiplicative LSTM Stability: 0.0006 vs 0.0006
+GRU vs Multiplicative GRU Stability: 0.0002 vs 0.0006
+
+Sequence Length: 1000
+LSTM vs Multiplicative LSTM: 0.1000 vs 0.1002
+GRU vs Multiplicative GRU: 0.0999 vs 0.1004
+LSTM vs Multiplicative LSTM Epochs: 20.00 vs 20.00
+GRU vs Multiplicative GRU Epochs: 20.00 vs 20.00
+LSTM vs Multiplicative LSTM Stability: 0.0003 vs 0.0003
+GRU vs Multiplicative GRU Stability: 0.0002 vs 0.0002
+
+Analyzing Performance at Longest Sequence Length (1000):
+LSTM: Mean Test Accuracy = 0.1000
+MultiplicativeLSTM: Mean Test Accuracy = 0.1002
+GRU: Mean Test Accuracy = 0.0999
+MultiplicativeGRU: Mean Test Accuracy = 0.1004
+
+Best Model for Longest Sequence: MultiplicativeGRU with Accuracy = 0.1004
+
+Analysis completed. Plots saved to disk.
