@@ -27,8 +27,8 @@ class ModelConfig:
 @dataclass
 class TrainingConfig:
     model_type: str
-    batch_size: int = 32
-    learning_rate: float = 0.0001
+    batch_size: int = 4096
+    learning_rate: float = 0.001
     num_epochs: int = 20
     clip_grad_norm: float = 5.0
     num_train_samples: int = 8000
