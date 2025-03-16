@@ -2,7 +2,7 @@
 
 ## Abstract
 
-This report evaluates four recurrent neural network architectures—standard LSTM, multiplicative LSTM, standard GRU, and multiplicative GRU—on the Copy Task, a benchmark designed to test a model’s ability to memorize and reproduce a sequence after a delay. We train each architecture on sequences of increasing length (100, 200, 500, and 1000 tokens) and measure final test accuracy, convergence speed, and training time. Despite theoretical advantages of multiplicative gating, all models converge near a trivial solution of predicting a single token with 10% accuracy, indicating that none mastered the long-term dependencies required for exact sequence reproduction. Further analysis reveals that GRU trains the fastest, followed by LSTM, multiplicative GRU, and multiplicative LSTM. However, no architecture meaningfully outperforms the others at generalizing to longer sequences under the chosen hyperparameters. These findings highlight the difficulty of pure memorization tasks at large sequence lengths and motivate future work on improved architectures or training strategies.
+This report evaluates four recurrent neural network architectures—standard LSTM, multiplicative LSTM, standard GRU, and multiplicative GRU—on the Copy Task, a benchmark designed to test a model’s ability to memorize and reproduce a sequence after a delay. I train each architecture on sequences of increasing length (100, 200, 500, and 1000 tokens) and measure final test accuracy, convergence speed, and training time. Despite theoretical advantages of multiplicative gating, all models converge near a trivial solution of predicting a single token with 10% accuracy, indicating that none mastered the long-term dependencies required for exact sequence reproduction. Further analysis reveals that GRU trains the fastest, followed by LSTM, multiplicative GRU, and multiplicative LSTM. However, no architecture meaningfully outperforms the others at generalizing to longer sequences under the chosen hyperparameters. These findings highlight the difficulty of pure memorization tasks at large sequence lengths and motivate future work on improved architectures or training strategies.
 
 ## 1. Introduction
 
@@ -13,7 +13,7 @@ This report presents an implementation and evaluation of four recurrent neural n
 - Standard GRU
 - Multiplicative GRU (mGRU)
 
-The copy task tests a model's ability to remember and reproduce a sequence after a delay, serving as an effective benchmark for assessing a network's long-term memory capabilities. In this experiment, we assess how well each architecture performs with increasing sequence lengths of 100, 200, 500, and 1000 tokens, and analyze the impact of multiplicative variants on long-term memory retention.
+The copy task tests a model's ability to remember and reproduce a sequence after a delay, serving as an effective benchmark for assessing a network's long-term memory capabilities. In this experiment, I assess how well each architecture performs with increasing sequence lengths of 100, 200, 500, and 1000 tokens, and analyze the impact of multiplicative variants on long-term memory retention.
 
 ## 2. Implementation Details
 
@@ -201,12 +201,12 @@ All four architectures are trained with the same hyperparameters to ensure fairn
 - **Random Seed**: 42
 - **Sequence Lengths Tested**: 100, 200, 500, 1000
 
-We also test an extra “generalization length” $(T+100)$ at test time, but for consistency, the final results shown here focus on the same length used in training.
+I also test an extra “generalization length” $(T+100)$ at test time, but for consistency, the final results shown here focus on the same length used in training.
 
 ### 2.4 Implementation-Specific Notes
 
-- **One-Hot Encoding**: We use a custom `OneHotEncoder` (see `trainer.py`) that builds an identity matrix of size $(\text{vocab\_size}+2)\times(\text{vocab\_size}+2)$ and indexes into it with the token IDs.
-- **Loss & Accuracy**: We compute cross-entropy over the final $T$ positions of the output (the part we expect the model to “copy”). Accuracy is the fraction of correctly predicted tokens in that final region.
+- **One-Hot Encoding**: I use a custom `OneHotEncoder` (see `trainer.py`) that builds an identity matrix of size $(\text{vocab\_size}+2)\times(\text{vocab\_size}+2)$ and indexes into it with the token IDs.
+- **Loss & Accuracy**: I compute cross-entropy over the final $T$ positions of the output (the part we expect the model to “copy”). Accuracy is the fraction of correctly predicted tokens in that final region.
 - **Hardware**: The training script checks if CUDA or MPS is available, else defaults to CPU.
 
 ## 3. Experimental Setup
@@ -215,13 +215,13 @@ We also test an extra “generalization length” $(T+100)$ at test time, but fo
 
 **File**: `experiment.py`
 
-We run `run_experiment` over each architecture (`LSTM`, `MultiplicativeLSTM`, `GRU`, `MultiplicativeGRU`) and each sequence length (`100, 200, 500, 1000`), for 3 trials each. The final results are saved as JSON, including mean test accuracy, standard deviation, average training time, and average epochs to convergence.
+I run `run_experiment` over each architecture (`LSTM`, `MultiplicativeLSTM`, `GRU`, `MultiplicativeGRU`) and each sequence length (`100, 200, 500, 1000`), for 3 trials each. The final results are saved as JSON, including mean test accuracy, standard deviation, average training time, and average epochs to convergence.
 
 ### 3.2 Results Gathering & Plotting
 
 **File**: `analyze.py`
 
-We parse the JSON file (`experiment_results.json`) and generate:
+I parse the JSON file (`experiment_results.json`) and generate:
 
 - Accuracy vs. Sequence Length (`accuracy_vs_seq_length.png`)
 - Training Time vs. Sequence Length (`train_time_vs_seq_length.png`)
@@ -321,7 +321,7 @@ Overall, these results illustrate the challenges of learning a pure copying obje
 
 ## 6. Conclusion
 
-In this study, we investigated four recurrent architectures—LSTM, multiplicative LSTM (mLSTM), GRU, and multiplicative GRU (mGRU)—on the Copy Task across sequence lengths of 100, 200, 500, and 1000 tokens. Despite the theoretical promise of multiplicative gating to improve long-range memorization, all models converged near a trivial solution, maintaining a consistent ~10% accuracy (i.e., random guessing) across training and validation. The losses for each architecture decreased in similar patterns and ultimately leveled off without demonstrating meaningful copying behavior.
+In this study, I investigated four recurrent architectures—LSTM, multiplicative LSTM (mLSTM), GRU, and multiplicative GRU (mGRU)—on the Copy Task across sequence lengths of 100, 200, 500, and 1000 tokens. Despite the theoretical promise of multiplicative gating to improve long-range memorization, all models converged near a trivial solution, maintaining a consistent ~10% accuracy (i.e., random guessing) across training and validation. The losses for each architecture decreased in similar patterns and ultimately leveled off without demonstrating meaningful copying behavior.
 
 While the copy task is known to be a challenging benchmark for testing a model’s long-term memory, the results here suggest that the chosen hyperparameters, initialization strategies, or optimization routines did not suffice to overcome the difficulty. Moreover, the LSTM and mLSTM required roughly twice as much training time as GRU and mGRU at the longest sequence length—yet still failed to move beyond 10% accuracy.
 
